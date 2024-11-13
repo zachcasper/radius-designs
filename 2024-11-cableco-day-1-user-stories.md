@@ -47,7 +47,7 @@ rad role definition create -f developer-role-definition.yaml
 # Assign the developer role to members of the enterprise developers Kubernetes RoleBinding
 # Permissions only apply in the enterprise application A resource group
 rad role assignment create \
-	--assignee rolebinding/enterprise-developers \
+  --assignee rolebinding/enterprise-developers \
   --role developer \
   --scope /planes/radius/CableCo/resourceGroup/ent-app-a
 ```
@@ -59,9 +59,9 @@ The contents of `developer-role-definition.yaml` is similar to:
 name: developer
 description: Role to manage applications and application resources within a resource group
 actions:
-	# Grant permissions to CRUDL applications in the scoped resource group
+  # Grant permissions to CRUDL applications in the scoped resource group
   - Applications.Core/applications/*
-	# Restrict using any resource type except those in the CableCo.App namespace
+  # Restrict using any resource type except those in the CableCo.App namespace
   - CableCo.App/*
 ```
 
@@ -116,12 +116,12 @@ metadata:
 spec:
   match:
     kinds:
-   	 - application
+      - application
   parameters:
     message: All applications much have a billing code annotation.
     annotations:
       - key: billing-code
-      	# Integer
+        # Integer
         allowedRegex: ^[0-9]*$
 ```
 
@@ -188,7 +188,7 @@ rad role definition create -f env-admin-role-definition.yaml
 # Assign environment administrator role to the cloud engineering Kubernetes RoleBinding
 # Permissions only apply in the enterprise non-production resource group
 rad role assignment create \
-	--assignee rolebinding/cloud-engineering \
+  --assignee rolebinding/cloud-engineering \
   --role env-admin \
   --scope /planes/radius/CableCo/resourceGroup/ent-non-prod
 ```
@@ -200,11 +200,11 @@ The contents of `env-admin-role-definition.yaml` is similar to:
 name: env-admin
 description: Role to manage environments within a resource group
 actions:
-	# Grant permissions to CRUDL environments and secrets in the scoped resource group
+  # Grant permissions to CRUDL environments and secrets in the scoped resource group
   - Applications.Core/environments/*
   - Applications.Core/secretStores/*
-	# Grant permissions to configure connections to AWS, Azure, and Kubernetes in the scoped resource group
-	- System.AWS/credentials/* 
+  # Grant permissions to configure connections to AWS, Azure, and Kubernetes in the scoped resource group
+  - System.AWS/credentials/* 
   - System.Azure/credentials/*
   - System.Kubernetes/credentials/*
 ```
@@ -256,8 +256,8 @@ The contents of `deployer-role-definition.yaml` is similar to:
 name: deployer
 description: Role granting ability to deploy to an environment
 actions:
-	# Grant permission to deploy resouces in any resource group to environments within the scoped resource group
-	- Applications.Core/environments/deployTo
+  # Grant permission to deploy resouces in any resource group to environments within the scoped resource group
+  - Applications.Core/environments/deployTo
 ```
 
 > [!NOTE]
@@ -306,8 +306,8 @@ The contents of `resource-type-admin-definition.yaml` is similar to:
 name: resource-type-admin
 description: Role to manage resource types for CableCo
 actions:
-	# Grant permissions to CRUDL resource types within the CableCo tenant
-	- System.Resources/resourceproviders/CableCo/*
+  # Grant permissions to CRUDL resource types within the CableCo tenant
+  - System.Resources/resourceproviders/CableCo/*
 ```
 
 **Result**
@@ -462,17 +462,17 @@ As a cloud engineer, I need to configure Terraform in the new environment to use
 ```bash
 # Create a secret with the Git personal access token in the enterprise non-production resource group
 rad secret create ent-non-prod-env-git-pat \
-	--group ent-non-prod \
-	--type generic \
+  --group ent-non-prod \
+  --type generic \
   --data { pat: { value: $PAT } }
 # Grant access for Terraform to the Git repository for the enterprise non-production envirnoment
 rad environment update ent-non-prod-env \
-	--recipe-config-terraform-authentication-pat-secret ent-non-prod-env-git-pat
+  --recipe-config-terraform-authentication-pat-secret ent-non-prod-env-git-pat
 # Configure Terraform to use a backend stored in an S3 bucket in the enterprise non-production envirnoment
 rad environment update ent-non-prod-env \
-	--terraform-backend-type s3 \
-	--terraform-backend-s3-bucket cableco-terraform-bucket \
-	--terraform-backend-s3-key /ent-non-prod-env
+  --terraform-backend-type s3 \
+  --terraform-backend-s3-bucket cableco-terraform-bucket \
+  --terraform-backend-s3-key /ent-non-prod-env
 ```
 
 **Result**
@@ -550,8 +550,8 @@ resource network 'CableCo.Net/VirtualNetworks@v1' = {
   properties: {
     environment: ent-non-prod-env
     parameters: {
-   		cidr-block: '10.68.1.120/28'
-  	}
+       cidr-block: '10.68.1.120/28'
+    }
   }
 }
 ```
@@ -615,7 +615,7 @@ resourceTypes:
             ...
             ## Change Log
             ... |
-        schema:	
+        schema:  
           properties:
             - image
               type: string
@@ -661,14 +661,14 @@ resourceTypes:
                   containerPort: 80
                   protocol: TCP
               command: $command
-            }	
+            }  
           - Application.Core/gateways@v1
             ...
           - Applications.Core/secretStores@v1
             ...
           - Applications.Core/autoscalers@v1
             ...
-          -	Applications.Datastores/redisCaches@v1
+          -  Applications.Datastores/redisCaches@v1
             name: redis
             properties:
               host: hostName
