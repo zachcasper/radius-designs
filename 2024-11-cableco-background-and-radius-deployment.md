@@ -1,6 +1,6 @@
 # **CableCo Background and Radius Deployment** 
 
-The goal of this document is to examine a complex enterprise and envision how Radius would support their organization and workflows. The intention is to bottom out Radius requirements specific to CableCo then to generalize those for all enterprises in a separate, CableCo-agnostic, document.*
+The goal of this document is to examine a complex enterprise and envision how Radius would support their organization and workflows. The intention is to bottom out Radius requirements specific to CableCo then to generalize those for all enterprises in a separate, CableCo-agnostic, document.
 
 What follows is a description of a fictional enterprise company based on multiple actual organizations. A significant number of details are inferred and are not indicative of a specific organization.
 

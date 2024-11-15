@@ -2,6 +2,29 @@
 
 This document is a follow-up to the CableCo Background and Radius Deployment document. It describes an end-to-end user journey for day 1 based on the CableCo deployment scenario. There will be a follow-up document for the day 2 user journey. This is not intended to be a generic feature spec. It intentionally builds upon the CableCo deployment architecture and is specific to CableCo. Throughout the document, new feature spec documents are identified which will need to be developed.
 
+## Features
+
+After the completion of the user stores below, feature gaps were identified and prioritized in the table below.
+
+| Priority | Size | Feature                                                      |
+| -------- | ---- | ------------------------------------------------------------ |
+| p0       | XL   | **UDT:** Ability to create resource types via `rad resource-type create` without the need to create a resource provider |
+| p1       | L    | **UDT**: Child resources                                     |
+| p1       | M    | **UDT:** Modify recipe registration to be specific to resource type version |
+| p2       | S    | **UDT:** Parameter data validation                           |
+| p1       | M    | **RBAC:**  Role definitions controlling applications, application resources, environments, secrets, and credentials in a resource group |
+| p1       | M    | **RBAC:**  Role definitions granting permission to deploy resources to another resource group without CRUDL |
+| p1       | L    | **RBAC:**  Assign role to an existing Kubernetes RoleBinding for a resource group |
+| p1       | L    | **Terraform:** Bring your own Terraform backends             |
+| p1       | M    | **External Kubernetes**: Register an external Kubernetes cluster via `rad credential register kubeconfig` within a resource group and add it to an environment |
+| p1       | L    | **External Kubernetes:** Deploy Kubernetes resources to external cluster when a kubeconfig exists on an environment |
+| p2       | M    | **RBAC:**  Role definitions granting permission to CRUDL resource types within a resource type namespace |
+| p2       | S    | **Terraform:** Create secrets via `rad secret create`        |
+| p2       | S    | **Terraform:** Configure Terraform Git repository via CLI    |
+| p2       | M    | **External Kubernetes:** Modify `System.AWS/credentials` to be resource group scoped |
+| p3       | L    | **Policy Management:** Extensible policy engine based on OAM syntax with out of the box policies |
+| p3       | M    | **RBAC:**  External identity providers including Entra ID, AWS IAM, Okta, etc. |
+
 ## Step 1 – Installing Radius
 
 As a Radius administrator, I need to install Radius. CableCo plans to use a single instance of Radius running in a multi-AZ Kubernetes cluster. Since I am going to use only a single tenant, I do not expect to need to configure, or have any awareness or, tenants.
@@ -103,7 +126,7 @@ As a Radius administrator, I need to create a policy which requires applications
 # Create require billing code on applications policy in the CableCo tenant
 rad policy create -f required-annotations.yaml
 # Attach policy to the enterprise application A resource group
-rad group policy create --group ent-app-a --policy require-billing-code-on-applications
+rad group policy register --group ent-app-a --policy require-billing-code-on-applications
 ```
 
 The contents of `required-annotations.yaml` is similar to:
@@ -306,8 +329,9 @@ The contents of `resource-type-admin-definition.yaml` is similar to:
 name: resource-type-admin
 description: Role to manage resource types for CableCo
 actions:
-  # Grant permissions to CRUDL resource types within the CableCo tenant
-  - System.Resources/resourceproviders/CableCo/*
+  # Grant permissions to CRUDL resource types within the CableCo.App and CableCo.Net resource providers
+  - System.Resources/resourceproviders/CableCo.App/*
+  - System.Resources/resourceproviders/CableCo.Net/*
 ```
 
 **Result**
@@ -335,21 +359,20 @@ As a cloud engineer, I need to create an environment in Radius and point it to a
 **User Experience**
 
 ```bash
-# Create a secret in Radius using the kubeconfig file
-# kubectx specified which context to use since kubeconfig has multiple contexts
-# kubect shorthand is used to mirror the commonly-used kubectx command
-rad credential register kubectx ent-non-prod-eks-cred \
-  --kubeconfig ~/.kube/config
+# Register a kubeconfig cluster and user
+rad credential register kubeconfig ent-non-prod-eks-cred \
+  --group ent-non-prod \
+  --kubeconfig ~/.kube/config \
   --kubectx eks-cluster
 # Create a secret in Radius for connecting to AWS APIs
-rad credential register aws access-key ent-non-prod-aws-cred \
-  --access-key-id myAaccessKeyId \
-  --secret-access-key mySecretAccessKey
+rad credential register aws irsa \
+	--iam-role myRoleARN \
+  --group ent-non-prod
 # Reads the kubeconfig file but not the client certificate or key
 rad environment create ent-non-prod-env \
   --group ent-non-prod \
   --namespace ent-non-prod \
-  --kubectx ent-non-prod-eks-cred
+  --kubeconfig ent-non-prod-eks-cred
   --aws-region us-east-1 \
   --aws-account-id myAwsAccountId
 ```
@@ -400,7 +423,7 @@ As a cloud engineer, I need to create several foundational resource types which 
 
 ```bash
 # Create the resource types in the CableCo.Net namespace
-rad resource-type create CableCo.Net/Environments -f environment.yaml
+rad resource-type create -f environment.yaml
 ```
 
 > [!NOTE]
@@ -417,7 +440,7 @@ The contents of `environment.yaml` is similar to:
 --- 
 namespace: CableCo.Net
 resourceTypes: 
-  - CableCo.Net/VirtualNetworks
+  - CableCo.Net/virtualNetworks
     versions:
       - name: v1
         metadata:
@@ -504,10 +527,10 @@ As a cloud engineer, I need to register a recipe in the new environment using an
  **User Experience**
 
 ```bash
-# Register a Terraform module called WebService to fulfill the CableCo.App/WebService@v1 resource type in the enterprise non-production environment
+# Register a Terraform module called WebService to fulfill the CableCo.App/webService@v1 resource type in the enterprise non-production environment
 rad recipe register WebService \
   --environment ent-non-prod-env \
-  --resource-type CableCo.App/WebService \
+  --resource-type CableCo.App/webService \
   --resource-type-version v1 \ 
   --template-kind terraform \
   --template-path git::https://github.com/CableCo/terraform-repo \
@@ -517,7 +540,7 @@ rad recipe register WebService \
 **Result**
 
 1. Access to the Terraform module is confirmed
-1. The Terraform module is registered to fulfill the CableCo.App/WebService@v1 resource type (only v1)
+1. The Terraform module is registered to fulfill the CableCo.App/webService@v1 resource type (only v1)
 
 **Exceptions**
 
@@ -548,17 +571,10 @@ The contents of `ent-non-prod-env.bicep` is similar to:
 resource network 'CableCo.Net/VirtualNetworks@v1' = {
   name: 'network'
   properties: {
-    environment: ent-non-prod-env
-    parameters: {
-       cidr-block: '10.68.1.120/28'
-    }
+     cidr-block: '10.68.1.120/28'
   }
 }
 ```
-
-> [!CAUTION]
->
-> The documentation on parameters is insufficient. It appears that parameters can only be passed to recipes rather than to the resource type.
 
 **Result**
 
@@ -584,7 +600,7 @@ As a member of the Enterprise Application Architecture team, I need to create a 
 
 ```bash
 # Create the resource type in the CableCo.App namespace
-rad resource-type create CableCo.App/Webservice -f webservice.yaml
+rad resource-type create CableCo.App/webservice -f webservice.yaml
 ```
 
 The contents of `webservice.yaml` is similar to:
@@ -668,7 +684,7 @@ resourceTypes:
             ...
           - Applications.Core/autoscalers@v1
             ...
-          -  Applications.Datastores/redisCaches@v1
+          - Applications.Datastores/redisCaches@v1
             name: redis
             properties:
               host: hostName
