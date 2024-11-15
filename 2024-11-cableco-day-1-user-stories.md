@@ -1,17 +1,16 @@
 # CableCo Radius Day 1 User Stories
 
-This document is a follow-up to the CableCo Background and Radius Deployment document. It describes an end-to-end user journey for day 1 based on the CableCo deployment scenario. There will be a follow-up document for the day 2 user journey. This is not intended to be a generic feature spec. It intentionally builds upon the CableCo deployment architecture and is specific to CableCo. Throughout the document, new feature spec documents are identified which will need to be developed.
+This document is a follow-up to the CableCo Background and Radius Deployment document. It describes an end-to-end user journey for day one based on the CableCo deployment scenario. There will be a follow-up document for the day two user journey. This is not intended to be a generic feature spec. It intentionally builds upon the CableCo deployment architecture and is specific to CableCo. Throughout the document, new feature spec documents are identified which will need to be developed.
 
 ## Features
 
-After the completion of the user stores below, feature gaps were identified and prioritized in the table below.
+The user stories below were completed first. As a summary, each user stories was compared against what is possible today. The table below captures the feature gaps in priority order:
 
 | Priority | Size | Feature                                                      |
 | -------- | ---- | ------------------------------------------------------------ |
 | p0       | XL   | **UDT:** Ability to create resource types via `rad resource-type create` without the need to create a resource provider |
 | p1       | L    | **UDT**: Child resources                                     |
 | p1       | M    | **UDT:** Modify recipe registration to be specific to resource type version |
-| p2       | S    | **UDT:** Parameter data validation                           |
 | p1       | M    | **RBAC:**  Role definitions controlling applications, application resources, environments, secrets, and credentials in a resource group |
 | p1       | M    | **RBAC:**  Role definitions granting permission to deploy resources to another resource group without CRUDL |
 | p1       | L    | **RBAC:**  Assign role to an existing Kubernetes RoleBinding for a resource group |
@@ -19,13 +18,18 @@ After the completion of the user stores below, feature gaps were identified and 
 | p1       | M    | **External Kubernetes**: Register an external Kubernetes cluster via `rad credential register kubeconfig` within a resource group and add it to an environment |
 | p1       | L    | **External Kubernetes:** Deploy Kubernetes resources to external cluster when a kubeconfig exists on an environment |
 | p2       | M    | **RBAC:**  Role definitions granting permission to CRUDL resource types within a resource type namespace |
+| p2       | S    | **UDT:** Parameter data validation                           |
 | p2       | S    | **Terraform:** Create secrets via `rad secret create`        |
 | p2       | S    | **Terraform:** Configure Terraform Git repository via CLI    |
 | p2       | M    | **External Kubernetes:** Modify `System.AWS/credentials` to be resource group scoped |
 | p3       | L    | **Policy Management:** Extensible policy engine based on OAM syntax with out of the box policies |
 | p3       | M    | **RBAC:**  External identity providers including Entra ID, AWS IAM, Okta, etc. |
 
-## Step 1 – Installing Radius
+## User Stories
+
+These user stories capture the end-to-end day one user journey for setting Radius up at CableCo. This user journey is specific to CableCo's requirements; therefore, the set of user stories is not comprehensive for Radius overall. 
+
+### Step 1 – Installing Radius
 
 As a Radius administrator, I need to install Radius. CableCo plans to use a single instance of Radius running in a multi-AZ Kubernetes cluster. Since I am going to use only a single tenant, I do not expect to need to configure, or have any awareness or, tenants.
 
@@ -56,7 +60,7 @@ The operation fails and informs the user interactively if:
 
 None
 
-## Step 2 – Create resource group for applications
+#### Step 2 – Create resource group for applications
 
 As a Radius administrator, I need to create a resource group for applications and application resources to be created in as well as set RBAC rules which define who can create applications in that group.
 
@@ -116,7 +120,7 @@ The operation fails and informs the user interactively if:
 
 This is all new functionality which needs to be documented in a new **RBAC feature spec**.
 
-## Step 3 – Set policies on the application resource group
+#### Step 3 – Set policies on the application resource group
 
 As a Radius administrator, I need to create a policy which requires applications and application resources to be annotated with a cost center. I also need to restrict overriding the recipe in resource definitions. 
 
@@ -197,7 +201,7 @@ The operation fails and informs the user interactively if:
 
 This is all new functionality which needs to be documented in a new **policy management feature spec**.
 
-## Step 4 – Create resource group for environments
+#### Step 4 – Create resource group for environments
 
 As a Radius administrator, I need to create a resource group for environments in Radius and set RBAC rules which define who can create environments in that group.
 
@@ -255,7 +259,7 @@ The operation fails and informs the user interactively if:
 
 This is all new functionality which needs to be documented in a new **RBAC feature spec**.
 
-## Step 5 – Create the Deployer role
+#### Step 5 – Create the Deployer role
 
 As a Radius administrator, I need to set RBAC rules which define who can deploy applications and resources into these environments.
 
@@ -305,7 +309,7 @@ The operation fails and informs the user interactively if:
 
 This is all new functionality which needs to be documented in a new **RBAC feature spec**.
 
-## Step 6 – Creating Resource Type Admin role
+#### Step 6 – Creating Resource Type Admin role
 
 As a Radius administrator, I need to delegate the ability to manage resource types in Radius to my cloud engineering and DBA teams.
 
@@ -352,7 +356,7 @@ The operation fails and informs the user interactively if:
 
 This is all new functionality which needs to be documented in a new **RBAC feature spec**.
 
-## Step 7 – Create an environment
+#### Step 7 – Create an environment
 
 As a cloud engineer, I need to create an environment in Radius and point it to a Kubernetes cluster running in CableCo's national data center in AWS. 
 
@@ -415,7 +419,7 @@ New functionality which needs to be documented in the **external Kubernetes clus
 1. Enhancements to the environment to support deploying applications to an external Kubernetes cluster
 2. New kube credential type which reads the certificate and key from the kubeconfig
 
-## Step 8 – Create foundational resource types
+#### Step 8 – Create foundational resource types
 
 As a cloud engineer, I need to create several foundational resource types which I will deploy to an environment to prepare it to host applications.
 
@@ -476,7 +480,7 @@ The operation fails and informs the user interactively if:
 
 This is new functionality which should be documented in the **UDT feature spec** including regular expression validation of parameters.
 
-## Step 9 – Configure Terraform 
+#### Step 9 – Configure Terraform 
 
 As a cloud engineer, I need to configure Terraform in the new environment to use an external Terraform backend and Git repository.
 
@@ -520,7 +524,7 @@ This is all new functionality which should be documented in the **customizing Te
 2. Ability to configure the Terraform block on the environment via the Radius CLI
 3. Ability to customize the Terraform backend via the Radius CLI
 
-## Step 10 – Register recipes
+#### Step 10 – Register recipes
 
 As a cloud engineer, I need to register a recipe in the new environment using an existing Terraform module.
 
@@ -554,7 +558,7 @@ The operation fails and informs the user interactively if:
 
 The only change is tying recipes to the version of a resource type. The rationale for this is to enable schema changes on the resource type without breaking the recipe. This should be documented in the **UDT feature spec**.
 
-## Step 11 – Deploy foundational resources
+#### Step 11 – Deploy foundational resources
 
 As a cloud engineer, I need to prepare the environment with common infrastructure before being able to host applications.
 
@@ -592,7 +596,7 @@ The operation fails and informs the user interactively if:
 
 Resource type parameter validation via regular expressions. This should be documented in the **UDT feature spec**.
 
-## Step 12 – Create composite resource types
+#### Step 12 – Create composite resource types
 
 As a member of the Enterprise Application Architecture team, I need to create a WebService resource type including the resource schema, metadata such as documentation, and the version.
 
