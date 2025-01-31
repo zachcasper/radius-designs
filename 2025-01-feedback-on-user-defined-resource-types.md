@@ -100,7 +100,7 @@ resource backend 'Applications.Core/containers@2023-10-01-preview' = {
     }
     # This is possible today
 +    env:{
-+    	ORDERS_DB_CONNECTION_STRING: {
++     ORDERS_DB_CONNECTION_STRING: {
 +          value: ordersDB.connectionString
 +      }
 +      ORDERS_DB_USERNAME: {
@@ -109,7 +109,7 @@ resource backend 'Applications.Core/containers@2023-10-01-preview' = {
 +      ORDERS_DB_PASSWORD: {
 +        value: ordersDB.credentias.password
 +      }
-  	}
+    }
 }
 `````
 
@@ -186,7 +186,7 @@ In the example above, there are two databases which are shared across applicatio
 resource environment 'Applications.Core/environments@2023-10-01-preview' = {
   name: 'production'
   properties: {
-		...
+    ...
   }
 }
 
@@ -216,7 +216,7 @@ resource backend 'Applications.Core/containers@2023-10-01-preview' = {
   properties: {
     container: {
       image: 'simple-eshop-backend:latest'
-  		connections: {
+      connections: {
         customersDB: {
           source: environment.customersDB.id
         }
@@ -256,7 +256,7 @@ extension radius
 resource environment 'Applications.Core/environments@2023-10-01-preview' = {
   name: 'production'
   properties: {
-		...
+    ...
   }
 }
 
@@ -283,7 +283,7 @@ resource backend 'Applications.Core/containers@2023-10-01-preview' = {
   properties: {
     container: {
       image: 'simple-eshop-backend:latest'
-  		connections: {
+      connections: {
         twilio: {
           source: environment.twilio.id
         }
@@ -360,7 +360,7 @@ resource MyCompany.App/externalService 'System.Resources/resourceTypes@2023-10-0
   // OpenAPI spec
   }
 
-	# Child resource
+  # Child resource
   resource credentials 'Applications.Core/secretStores@2023-10-01-preview' = {
   name: 'credentials'
     properties: {
@@ -371,9 +371,9 @@ resource MyCompany.App/externalService 'System.Resources/resourceTypes@2023-10-0
         'password': {
           value: parent.credentials.password
         }
-    	}
-  	}
-	}
+      }
+    }
+  }
 }
 `````
 
@@ -406,8 +406,8 @@ resource MyCompany.App/service 'System.Resources/resourceTypes@2023-10-01-previe
   // OpenAPI spec
   }
 
-	# Child resources
-+	resource ingress-gw 'Applications.Core/gateways@2023-10-01-preview' = if (ingress) {
+  # Child resources
++ resource ingress-gw 'Applications.Core/gateways@2023-10-01-preview' = if (ingress) {
     name: 'ingress-gw'
     properties: {
       hostname: {
@@ -459,37 +459,37 @@ The use case would be if there were applications which had multiple containers w
 
 `````yaml
 resource MyCompany.App/service 'System.Resources/resourceTypes@2023-10-01-preview' = {
-	name: 'MyCompany.App/service'
-	description: 'The service resource type is a long-running process responding to HTTP requests over TLS.'
-	api: {
-		version: 'v1alpha1'
+  name: 'MyCompany.App/service'
+  description: 'The service resource type is a long-running process responding to HTTP requests over TLS.'
+  api: {
+    version: 'v1alpha1'
     schema: {
       properties: {
         container-image: {
           type: 'string'
           description: 'Container image name'
-				}
-				ingress: {
+        }
+        ingress: {
           type: 'bool'
           description: 'Expose web service to external connections'
-				}
-				cpu-request: {
+        }
+        cpu-request: {
           type: 'string'
           description: 'Number of CPUs required in CPUs or milliCPUs'
-				}
-				memory-request: {
+        }
+        memory-request: {
           type: 'string'
           description: 'Memory required in MiB or GiB'
-				}
-				dnsName: {
+        }
+        dnsName: {
           type: 'string'
           description: 'Fully qualified DNS of the web service '
-				}
+        }
         required: ['container-image', 'ingress']
-	    }
-  	}
-	}	
-	resource ingress-gw 'Applications.Core/gateways@2023-10-01-preview' = if (ingress) {
+      }
+    }
+  } 
+  resource ingress-gw 'Applications.Core/gateways@2023-10-01-preview' = if (ingress) {
     name: 'ingress-gw'
     properties: {
       hostname: {
@@ -525,23 +525,23 @@ resource MyCompany.App/service 'System.Resources/resourceTypes@2023-10-01-previe
 
 `````yaml
 resource MyCompany.App/postgreSQL 'System.Resources/resourceTypes@2023-10-01-preview' = {
-	name: 'MyCompany.App/postgreSQL'
-	description: A postgreSQL database
-	api: {
-		version: 'v1alpha1'
+  name: 'MyCompany.App/postgreSQL'
+  description: A postgreSQL database
+  api: {
+    version: 'v1alpha1'
     schema: {
       properties: {
         size: {
           type: 'string'
           description: 'The size of database to provision'
           enum: ['S', 'M', 'L', 'XL']
-				}
-				connectionString: {
+        }
+        connectionString: {
           type: 'string'
           readOnly: true
           description: 'Fully qualified string to connect to the resource'
-				}
-				credentials: {
+        }
+        credentials: {
           type: 'object'
           readOnly: true
           properties: {
@@ -552,8 +552,8 @@ resource MyCompany.App/postgreSQL 'System.Resources/resourceTypes@2023-10-01-pre
             password: {
               type: 'string'
               description: 'Password for the database user'
-						}
-					}
+            }
+          }
         }
       required: ['size']
     }
@@ -565,17 +565,17 @@ resource MyCompany.App/postgreSQL 'System.Resources/resourceTypes@2023-10-01-pre
 
 `````yaml
 resource MyCompany.App/externalService 'System.Resources/resourceTypes@2023-10-01-preview' = {
-	name: 'MyCompany.App/externalService'
-	description: 'The external service resource type is deployed to an environment for multiple applications to inspect for the connection string and credentials for the external service.'
-	api: {
-		version: 'v1alpha1'
+  name: 'MyCompany.App/externalService'
+  description: 'The external service resource type is deployed to an environment for multiple applications to inspect for the connection string and credentials for the external service.'
+  api: {
+    version: 'v1alpha1'
     schema: {
       properties: {
         connection-string: {
           type: 'string'
           description: 'The connection string to the external service'
-				}
-				credentials: {
+        }
+        credentials: {
           type: 'object'
           properties: {
             username: {
@@ -585,10 +585,10 @@ resource MyCompany.App/externalService 'System.Resources/resourceTypes@2023-10-0
             password: {
               type: 'string'
               description: 'Password for the external service user'
-						}
-					}
-  		}
-	}	
+            }
+          }
+      }
+  } 
   resource credentials 'Applications.Core/secretStores@2023-10-01-preview' = {
   name: 'credentials'
     properties: {
@@ -599,9 +599,9 @@ resource MyCompany.App/externalService 'System.Resources/resourceTypes@2023-10-0
         'password': {
           value: parent.credentials.password
         }
-    	}
-  	}
-	}
+      }
+    }
+  }
 }
 `````
 
