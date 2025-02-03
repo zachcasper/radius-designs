@@ -692,13 +692,29 @@ resource MyCompany.App/postgreSQL 'System.Resources/resourceTypes@2023-10-01-pre
       properties: {
         size: {
           type: 'string'
-          description: 'The size of database to provision'
+          description: '''
+            The size of database to provision
+              - 'S': 0.5 vCPU, 2 GiB memory, 20 GiB storage
+              - 'M': 1. vCPU, 4 GiB memory, 40 GiB storage
+              - 'L': 2.0 vCPU, 8 GiB memory, 60 GiB storage
+              - 'XL': 4.0 vCPU, 16 GiB memory, 100 GiB storage
+            '''
           enum: ['S', 'M', 'L', 'XL']
         }
-        connectionString: {
+        logging-verbosity: {
+          type: string
+          description: '''
+            The logging level for the database
+              - 'TERSE': Not recommended; does not provide guidance on what to do about an error
+              - 'DEFAULT': Recommended level
+              - 'VERBOSE': Use only if you plan to actually look up the Postgres source code |
+          enum: ['TERSE', 'DEFAULT', 'VERBOSE']
+        }
+        connection-string: {
           type: 'string'
           readOnly: true
           description: 'Fully qualified string to connect to the resource'
+          env-variable: POSTGRESQL_CONNECTION_STRING
         }
         credentials: {
           type: 'object'
@@ -707,10 +723,12 @@ resource MyCompany.App/postgreSQL 'System.Resources/resourceTypes@2023-10-01-pre
             username: {
               type: 'string'
               description: 'Username for the database'
+              env-variable: POSTGRESQL_USERNAME
             }
             password: {
               type: 'string'
               description: 'Password for the database user'
+              env-variable: POSTGRESQL_PASSWORD
             }
           }
         }
@@ -725,7 +743,11 @@ resource MyCompany.App/postgreSQL 'System.Resources/resourceTypes@2023-10-01-pre
 `````yaml
 resource MyCompany.App/externalService 'System.Resources/resourceTypes@2023-10-01-preview' = {
   name: 'MyCompany.App/externalService'
-  description: 'The external service resource type is deployed to an environment for multiple applications to inspect for the connection string and credentials for the external service.'
+  description: '''
+    The external service resource type is deployed to an environment
+    for multiple applications to inspect for the connection string 
+    and credentials for the external service.
+    '''
   api: {
     version: 'v1alpha1'
     schema: {
@@ -869,16 +891,16 @@ resource backend 'MyCompany.App/service@v1alpha1' = {
         source: ordersDB.id
       }
       stripe: {
-        source: environment.stripe.id
+        source: stripe.id
       }
       twilio: {
-        source: environment.twilio.id
+        source: twilio.id
       }
       customersDB: {
-        source: environment.customersDB.id
+        source: customersDB.id
       }
       productsDB: {
-        source: environment.productsDB.id
+        source: productsDB.id
       }
     }
   }
