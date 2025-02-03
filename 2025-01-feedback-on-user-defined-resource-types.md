@@ -14,7 +14,7 @@ In the diagram below, the Simple eShop has been modeled using Radius resource ty
 
 The first use case is the simplest. It is a user-defined resource type, defined by a custom API, backed by a recipe—either Terraform or Bicep. In this example, a PostgreSQL database is modeled. There are three types of properties: required, optional, and read-only. Required and optional properties are input parameters while read-only properties are output parameters set by the deployment engine.
 
-![image-20250130161632635](2025-01-feedback-on-user-defined-resource-types//image-20250130161632635.png) 
+![image-20250203105342304](2025-01-feedback-on-user-defined-resource-types//image-20250203105342304.png) 
 
 We envision modeling this resource type using YAML:
 
@@ -35,11 +35,18 @@ resourceTypes:
               type: string
               description: The size of database to provision
               enum:
-              - S
-              - M
-              - L
-              - XL
-            connectionString:
+                - S
+                - M
+                - L
+                - XL
+            logging-verbosity:
+              type: string
+              description: The logging level for the database
+              enum:
+                - TERSE
+                - DEFAULT
+                - VERBOSE
+            connection-string:
               type: string
               # Set via an output from a recipe
               # Readable in the application definition Bicep file
@@ -85,11 +92,11 @@ resourceTypes:
       long-name: MyCompany PostgreSQL Database
       description: | 
         The MyCompany.App/postgreSQL@v1alpha1 resource type
-				is a standard configuration relational database configured with 
-				corporate security settings enforced. |
+        is a standard configuration relational database configured with 
+        corporate security settings enforced. |
       example: |
         ... |
-			change-log: |
+      change-log: |
         ... |
     apiVersions:
       # See question 2
@@ -110,6 +117,17 @@ resourceTypes:
               - M
               - L
               - XL
+            logging-verbosity:
+              type: string
+              description: |
+                The logging level for the database
+                  - 'TERSE': Not recommended; does not provide guidance on what to do about an error
+                  - 'DEFAULT': Recommended level
+                  - 'VERBOSE': Use only if you plan to actually look up the Postgres source code |
+              enum:
+                - TERSE
+                - DEFAULT
+                - VERBOSE
             connection-string:
               type: string
               # Set via an output from a recipe
@@ -168,6 +186,10 @@ REQUIRED PROPERTIES
 		  - 'L': 2.0 vCPU, 8 GiB memory, 60 GiB storage
 		  - 'XL': 4.0 vCPU, 16 GiB memory, 100 GiB storage
 OPTIONAL PROPERTIES
+  * logging-level (string) The logging level for the database
+      - 'TERSE': Not recommended; does not provide guidance on what to do about an error
+      - 'DEFAULT': Recommended level
+      - 'VERBOSE': Use only if you plan to actually look up the Postgres source code |
 READ-ONLY PROPERTIES
   * connection-string (string) Fully qualified string to connect to the resource
   * credentials.username (string) The username for the database
