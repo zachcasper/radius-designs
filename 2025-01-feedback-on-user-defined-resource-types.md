@@ -174,28 +174,34 @@ rad resource-type show MyCompany.App/postgreSQL
 NAMESPACE                MyCompany.App
 RESOURCE TYPE            postgreSQL
 VERSION                  v1alpha1
+
 DESCRIPTION
   The MyCompany.App/postgreSQL@v1alpha1 resource type
   is a standard configuration relational database configured with 
   corporate security settings enforced.
+
 REQUIRED PROPERTIES
   * size (string)
     The size of database to provision
-		  - 'S': 0.5 vCPU, 2 GiB memory, 20 GiB storage
-		  - 'M': 1. vCPU, 4 GiB memory, 40 GiB storage
-		  - 'L': 2.0 vCPU, 8 GiB memory, 60 GiB storage
-		  - 'XL': 4.0 vCPU, 16 GiB memory, 100 GiB storage
+      - 'S': 0.5 vCPU, 2 GiB memory, 20 GiB storage
+      - 'M': 1. vCPU, 4 GiB memory, 40 GiB storage
+      - 'L': 2.0 vCPU, 8 GiB memory, 60 GiB storage
+      - 'XL': 4.0 vCPU, 16 GiB memory, 100 GiB storage
+
 OPTIONAL PROPERTIES
   * logging-level (string) The logging level for the database
       - 'TERSE': Not recommended; does not provide guidance on what to do about an error
       - 'DEFAULT': Recommended level
       - 'VERBOSE': Use only if you plan to actually look up the Postgres source code |
+
 READ-ONLY PROPERTIES
   * connection-string (string) Fully qualified string to connect to the resource
   * credentials.username (string) The username for the database
   * credentials.password (string) The password for the database user
+
 ENVIRONMENT VARIABLES
 ...
+
 EXAMPLE
 ...
 ```
