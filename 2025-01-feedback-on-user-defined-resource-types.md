@@ -14,15 +14,17 @@ In the diagram below, the Simple eShop has been modeled using Radius resource ty
 
 The first use case is the simplest. It is a user-defined resource type, defined by a custom API, backed by a recipe—either Terraform or Bicep. In this example, a PostgreSQL database is modeled. There are three types of properties: required, optional, and read-only. Required and optional properties are input parameters while read-only properties are output parameters set by the deployment engine.
 
-<img src="2025-01-feedback-on-user-defined-resource-types//image-20250130161632635.png" alt="image-20250130161632635" style="zoom:33%;" /> 
+![image-20250130161632635](2025-01-feedback-on-user-defined-resource-types//image-20250130161632635.png) 
 
 We envision modeling this resource type using YAML:
 
 `````yaml
+---
 namespace: MyCompany.App
 resourceTypes: 
   postgreSQL:
-    description: A postgreSQL database
+    metadata:
+      description: A postgreSQL database
     apiVersions:
       # See question 2
       'v1alpha1':
@@ -70,11 +72,119 @@ Should the apiVersion field simply be a string?
 
 Any other constraints or validations?
 
-## Use Case 2 – Using Properties
+## Use Case 2 – Developer Documentation
+
+The resource catalog needs to be browsable by developers. We envision developers being able to inspect resource types via the CLI and via the Radius dashboard. First, platform engineers would annotate the resource type definition with developer documentation such as:
+
+`````yaml
+---
+namespace: MyCompany.App
+resourceTypes: 
+  postgreSQL:
+  	metadata:
+      long-name: MyCompany PostgreSQL Database
+      description: | 
+        The MyCompany.App/postgreSQL@v1alpha1 resource type
+				is a standard configuration relational database configured with 
+				corporate security settings enforced. |
+      example: |
+        ... |
+			change-log: |
+        ... |
+    apiVersions:
+      # See question 2
+      'v1alpha1':
+        schema: 
+          type: object
+          properties:
+            size:
+              type: string
+              description: |
+                The size of database to provision
+                  - 'S': 0.5 vCPU, 2 GiB memory, 20 GiB storage
+                  - 'M': 1. vCPU, 4 GiB memory, 40 GiB storage
+                  - 'L': 2.0 vCPU, 8 GiB memory, 60 GiB storage
+                  - 'XL': 4.0 vCPU, 16 GiB memory, 100 GiB storage |
+              enum:
+              - S
+              - M
+              - L
+              - XL
+            connection-string:
+              type: string
+              # Set via an output from a recipe
+              # Readable in the application definition Bicep file
+              readOnly: true
+              description: Fully qualified string to connect to the resource
+            credentials:
+              type: object
+              readOnly: true
+              properties:
+                username:
+                  type: string
+                  description: The username for the database
+                password:
+                  type: string
+                  description: The password for the database user
+          required:
+            # Cannot be read-only properties
+            - size
+`````
+
+Then the developer can:
+
+```yaml
+# List all resource types
+rad resource-type list
+NAMESPACE                RESOURCE TYPE
+MyCompany.App            postgreSQL
+MyCompany.App            service
+MyCompany.Net            gateway
+```
+
+```yaml
+# List all resource types filtering by namespace
+rad resource-type list --namespace MyCompany.App
+NAMESPACE                RESOURCE TYPE
+MyCompany.App            postgreSQL
+MyCompany.App            services
+```
+
+```yaml
+# Show details of a resource type
+rad resource-type show MyCompany.App/postgreSQL
+NAMESPACE                MyCompany.App
+RESOURCE TYPE            postgreSQL
+VERSION                  v1alpha1
+DESCRIPTION
+  The MyCompany.App/postgreSQL@v1alpha1 resource type
+  is a standard configuration relational database configured with 
+  corporate security settings enforced.
+REQUIRED PROPERTIES
+  * size (string)
+    The size of database to provision
+		  - 'S': 0.5 vCPU, 2 GiB memory, 20 GiB storage
+		  - 'M': 1. vCPU, 4 GiB memory, 40 GiB storage
+		  - 'L': 2.0 vCPU, 8 GiB memory, 60 GiB storage
+		  - 'XL': 4.0 vCPU, 16 GiB memory, 100 GiB storage
+OPTIONAL PROPERTIES
+READ-ONLY PROPERTIES
+  * connection-string (string) Fully qualified string to connect to the resource
+  * credentials.username (string) The username for the database
+  * credentials.password (string) The password for the database user
+ENVIRONMENT VARIABLES
+...
+EXAMPLE
+...
+```
+
+### Question 3 – Any feedback on the metadata fields and the CLI output?
+
+## Use Case 3 – Using Properties
 
 When you author a user-defined resource type, the resource will have required properties, optional properties, and read-only properties. The required and optional properties are input parameters when creating the resource. The read-only properties are output parameters set by the deployment engine and the recipe.
 
-### Question 3 – When a connection is added from a container to this resource, how should read-only property values be injected into the application?
+### Question 4 – When a connection is added from a container to this resource, how should read-only property values be injected into the application?
 
 #### Option A – Environment variables specified in the application definition by the developer
 
@@ -157,7 +267,7 @@ postgreSQL:
           - size
 `````
 
-### Question 4 – Do properties need data validation?
+### Question 5 – Do properties need data validation?
 
 We envision needing to have data validation on all writable parameters. It doesn't apply in the PostgreSQL example, but here is an alternative example of using a regular expression to validate a property value.
 
@@ -174,7 +284,7 @@ properties:
 
 Is data validation on properties required? If so, what is the relative priority?
 
-## Use Cases 3 – Connecting to shared resources 
+## Use Cases 4 – Connecting to shared resources 
 
 Shared resources are resources maintained by either the platform engineering team or another non-application team. Most examples are all shared storage resources of some kind; a shared database server as the most common example. 
 
@@ -200,6 +310,7 @@ resource customersDB 'MyCompany.App/postgreSQL@v1alpha1' = {
 
 # Note that there is no application property
 resource productsDB 'MyCompany.App/postgreSQL@v1alpha1' = {
+  name: 'productsDB'
   properties: {
 +    environment: production
     size: L
@@ -211,6 +322,18 @@ Then the application can create connections to those resources in the environmen
 **`simple-Eshop.bicep`**
 
 `````yaml
+# Existing resource in the resource group
+resource customersDB 'MyCompany.App/postgreSQL@v1alpha1' = existing {
+  name: 'customersDB'
+}
+
+# Existing resource in the resource group
+resource productsDB 'MyCompany.App/postgreSQL@v1alpha1' = {
+  name: 'productsDB'
+  # If in another resource group
+  # scope: resourceGroup(exampleRG)
+}
+
 resource backend 'Applications.Core/containers@2023-10-01-preview' = {
   name: 'backend'
   properties: {
@@ -218,17 +341,17 @@ resource backend 'Applications.Core/containers@2023-10-01-preview' = {
       image: 'simple-eshop-backend:latest'
       connections: {
         customersDB: {
-          source: environment.customersDB.id
+          source: customersDB.id
         }
         productsDB: {
-          source: environment.productsDB.id
+          source: productsDB.id
         }
       }
   ...
 }
 `````
 
-### Question 5 – What is your feedback on the shared resource use case?
+### Question 6 – What is your feedback on the shared resource use case?
 
 Do you have this use case?
 
@@ -236,13 +359,13 @@ How common would it be in a multiple application Radius environment?
 
 Would you use this capability early in your adoption of Radius or much later? It is assumed that this capability is not required for the first Radius-managed application.
 
-## Use Case 4 – Connecting to external services
+## Use Case 5 – Connecting to external services
 
 In the Simple eShop application, the backend service connects to Stripe for payment processing and Twilio to send emails and text messages. The simplest approach for managing the connection details and credentials for these external services is to set these value manually within the application definition.
 
 Alternatively, the platform engineer, or environment manager can model these external services as resources. The benefits of modeling external services this way is twofold. First is that the developer can easily get environment-specific external service details. In fact, the developer would only need to create the connection in their application definition then environment variables would automatically be injected into the container. Second, the connection to the external service will show in the application graph. 
 
- <img src="2025-01-feedback-on-user-defined-resource-types//image-20250130211819236.png" alt="image-20250130211819236" style="zoom:33%;" /> 
+ ![image-20250130211819236](2025-01-feedback-on-user-defined-resource-types//image-20250130211819236.png) 
 
 In this case, the external services would be similar to connecting to shared services. However, the key difference is that the external service resource does not have a deployed resource. It is simply metadata which is available for applications within an environment to consume.
 
@@ -278,6 +401,11 @@ resource twilio 'MyCompany.App/externalService@v1alpha1' = {
 And here is a container with a connection to Twilio. Environment variables would automatically be injected into the container would as shown in use case 2, option B.
 
 `````yaml
+# Existing resource in the resource group
+resource twilio 'MyCompany.App/externalService@v1alpha1' = existing {
+  name: 'twilio'
+}
+
 resource backend 'Applications.Core/containers@2023-10-01-preview' = {
   name: 'backend'
   properties: {
@@ -285,21 +413,21 @@ resource backend 'Applications.Core/containers@2023-10-01-preview' = {
       image: 'simple-eshop-backend:latest'
       connections: {
         twilio: {
-          source: environment.twilio.id
+          source: twilio.id
         }
   ...
 }
 `````
 
-### Question 6 – Would you prefer to model external services as resources or manage them manually?
+### Question 7 – Would you prefer to model external services as resources or manage them manually?
 
-## Use Case 5 – User-defined resource type with embedded system-defined resource
+## Use Case 6 – User-defined resource type with embedded system-defined resource
 
 In this use case, a user-defined resource type is created such as the external service from the previous use case. This time, however, the resource type has an another embedded resource. In the external service example, this is a secret, which is a Radius system-defined resource type meaning Radius knows how to deploy these resource types. Therefore, a Terraform or Bicep recipe is not required. Other system-defined resource types include containers, gateways, volumes, and others.
 
-<img src="2025-01-feedback-on-user-defined-resource-types//image-20250130161602230.png" alt="image-20250130161602230" style="zoom:33%;" /> 
+![image-20250130161602230](2025-01-feedback-on-user-defined-resource-types//image-20250130161602230.png) 
 
-### Question 7 – Would you want to use a system-defined resource type from within a user-defined resource type?
+### Question 8 – Would you want to use a system-defined resource type from within a user-defined resource type?
 
  Is this a valid use case, and if so, how high a priority is this use case? 
 
@@ -307,13 +435,16 @@ Would you use this pattern in the first application you deployed with Radius?
 
 How valuable is the benefit of using a system-defined resource type and its built-in deployment logic over simply using a recipe as in the previous example?
 
-### Question 8 – For this use case, how would you prefer to model this resource type?
+The alternative to this capability is referencing two existing resources in the app.bicep file—one for the external service which has the connection string, and another for the secret. This sounds acceptable, but extrapolating this use case out to more complex examples, this approach starts to break down. See use case 7 for a more complex use case.
+
+### Question 9 – For this use case, how would you prefer to model this resource type?
 
 #### Option A – YAML
 
 The benefit of using YAML is that it is generally easier to use with greater awareness. However, the syntax of a resource being inside a resource type definition is awkward in YAML.
 
 ````yaml
+---
 namespace: MyCompany.App
 resourceTypes: 
   externalService:
@@ -377,13 +508,13 @@ resource MyCompany.App/externalService 'System.Resources/resourceTypes@2023-10-0
 }
 `````
 
-## Use Case 6 – Composite Resource Types
+## Use Case 7 – Composite Resource Types
 
 The service resource type below has an API just like other resource types. However, it has multiple resource types embedded within. 
 
-<img src="2025-01-feedback-on-user-defined-resource-types//image-20250130193139170.png" alt="image-20250130193139170" style="zoom:33%;" /> 
+![image-20250130193139170](2025-01-feedback-on-user-defined-resource-types//image-20250130193139170.png) 
 
-### Question 9 – How would you use a complex resource type like this?
+### Question 10 – How would you use a complex resource type like this?
 
 What are your use cases?
 
@@ -391,11 +522,11 @@ How prevalent would these use cases be?
 
 Would you use these resource types in the near term if they were available?
 
-### Question 10 – Would you need to intermix system-defined resource types and other user-defined resource types?
+### Question 11 – Would you need to intermix system-defined resource types and other user-defined resource types?
 
 In terms of example, only system-defined resource type are used. Notice that there are no recipes for this resource type since everything is handled by system-defined resource types.
 
-### Question 11 – Would you use conditions?
+### Question 12 – Would you use conditions?
 
 In the example, the ingress gateway is only provisioned if the ingress property is true. This is what that would look like if the resource type was defined using Bicep:
 
@@ -441,7 +572,7 @@ resource MyCompany.App/service 'System.Resources/resourceTypes@2023-10-01-previe
 }
 `````
 
-### Question 12 – Would you need a variable number of containers?
+### Question 13 – Would you need a variable number of containers?
 
 The service example could accept an array of containers if there was a need to have an arbitrary number of containers in a service.
 
@@ -730,6 +861,26 @@ resource ordersDB 'MyCompany.App/postgreSQL@v1alpha1' = {
   properties: {
     application: application
     size: L
+}
+
+# Existing resource in the resource group
+resource customersDB 'MyCompany.App/postgreSQL@v1alpha1' = existing {
+  name: 'customersDB'
+}
+
+# Existing resource in the resource group
+resource productsDB 'MyCompany.App/postgreSQL@v1alpha1' = existing {
+  name: 'productsDB'
+}
+
+# Existing resource in the resource group
+resource twilio 'MyCompany.App/externalService@v1alpha1' = existing {
+  name: 'twilio'
+}
+
+# Existing resource in the resource group
+resource stripe 'MyCompany.App/externalService@v1alpha1' = existing {
+  name: 'stripe'
 }
 `````
 
