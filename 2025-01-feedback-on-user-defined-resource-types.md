@@ -449,13 +449,15 @@ resource backend 'Applications.Core/containers@2023-10-01-preview' = {
 
 ### Question 7 – Would you prefer to model external services as resources or manage them manually?
 
+### Question 8 – Would you need to set default values on the properties?
+
 ## Use Case 6 – User-defined resource type with embedded system-defined resource
 
 In this use case, a user-defined resource type is created such as the external service from the previous use case. This time, however, the resource type has an another embedded resource. In the external service example, this is a secret, which is a Radius system-defined resource type meaning Radius knows how to deploy these resource types. Therefore, a Terraform or Bicep recipe is not required. Other system-defined resource types include containers, gateways, volumes, and others.
 
 ![image-20250130161602230](2025-01-feedback-on-user-defined-resource-types//image-20250130161602230.png) 
 
-### Question 8 – Would you want to use a system-defined resource type from within a user-defined resource type?
+### Question 9 – Would you want to use a system-defined resource type from within a user-defined resource type?
 
  Is this a valid use case, and if so, how high a priority is this use case? 
 
@@ -465,7 +467,7 @@ How valuable is the benefit of using a system-defined resource type and its buil
 
 The alternative to this capability is referencing two existing resources in the app.bicep file—one for the external service which has the connection string, and another for the secret. This sounds acceptable, but extrapolating this use case out to more complex examples, this approach starts to break down. See use case 7 for a more complex use case.
 
-### Question 9 – For this use case, how would you prefer to model this resource type?
+### Question 10 – For this use case, how would you prefer to model this resource type?
 
 #### Option A – YAML
 
@@ -542,7 +544,7 @@ The service resource type below has an API just like other resource types. Howev
 
 ![image-20250130193139170](2025-01-feedback-on-user-defined-resource-types//image-20250130193139170.png) 
 
-### Question 10 – How would you use a complex resource type like this?
+### Question 11 – How would you use a complex resource type like this?
 
 What are your use cases?
 
@@ -550,11 +552,11 @@ How prevalent would these use cases be?
 
 Would you use these resource types in the near term if they were available?
 
-### Question 11 – Would you need to intermix system-defined resource types and other user-defined resource types?
+### Question 12 – Would you need to intermix system-defined resource types and other user-defined resource types?
 
 In terms of example, only system-defined resource type are used. Notice that there are no recipes for this resource type since everything is handled by system-defined resource types.
 
-### Question 12 – Would you use conditions?
+### Question 13 – Would you use conditions?
 
 In the example, the ingress gateway is only provisioned if the ingress property is true. This is what that would look like if the resource type was defined using Bicep:
 
@@ -600,7 +602,7 @@ resource MyCompany.App/service 'System.Resources/resourceTypes@2023-10-01-previe
 }
 `````
 
-### Question 13 – Would you need a variable number of containers?
+### Question 14 – Would you need a variable number of containers?
 
 The service example could accept an array of containers if there was a need to have an arbitrary number of containers in a service.
 
